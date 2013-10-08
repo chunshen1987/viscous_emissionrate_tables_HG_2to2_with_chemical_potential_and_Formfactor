@@ -1,7 +1,7 @@
-// parameters for non-thermal equilibrium delta f correction
-deltaf_alpha = 1;   //the exponent of the p dependence of the delta f correction deltaf_alpha = 2 for democratic choice
+# parameters for non-thermal equilibrium delta f correction
+deltaf_alpha = 2;   #the exponent of the p dependence of the delta f correction deltaf_alpha = 2 for democratic choice
 
-// parameters for numerical integrations
+# parameters for numerical integrations
 n_s = 100;
 s_max = 50.0;
 n_t = 20;
@@ -9,10 +9,10 @@ n_t = 20;
 n_E1 = 20;
 n_E2 = 20;
 
-// parameters for output photon emission rate table
-n_Eq = 80;
-Eq_i = 0.05;
+# parameters for output photon emission rate table
+n_Eq = 1;
+Eq_min = 0.05;
 dEq = 0.05;
-n_Temp = 76;
-T_i = 0.1;
+n_Temp = 1;
+T_min = 0.1;
 dT = 0.002;

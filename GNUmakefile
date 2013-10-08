@@ -11,11 +11,11 @@
 ##  
 
 CC := g++
-CFLAGS= -O3
+CFLAGS= -O3 -I/sw/include
 
 RM		=	rm -f
 O               =       .o
-LDFLAGS         =       $(CFLAGS)
+LDFLAGS         =       $(CFLAGS) -L/sw/lib -lgsl -lgslcblas
 SYSTEMFILES     =       $(SRCGNU)
 
 # --------------- Files involved ------------------
@@ -26,12 +26,13 @@ endif
 
 SRC		=	main.cpp Arsenal.cpp gauss_quadrature.cpp \
                   Matrix_elements_sq.cpp Phasespace_integrals.cpp \
-                  Table2D.cpp chemical_potential.cpp Formfactor.cpp
+                  Table2D.cpp chemical_potential.cpp Formfactor.cpp \
+                  HG_2to2_Scattering.cpp ParameterReader.cpp
 
 INC		= 	Arsenal.h Physicalconstants.h Stopwatch.h \
                   Matrix_elements_sq.h Phasespace_integrals.h \
                   gauss_quadrature.h Table2D.h chemical_potential.h \
-                  Formfactor.h
+                  Formfactor.h HG_2to2_Scattering.h ParameterReader.h
 
 # -------------------------------------------------
 
@@ -77,10 +78,12 @@ install:	$(TARGET)
 		cp $(TARGET) $(INSTPATH)
 
 # --------------- Dependencies -------------------
-main.cpp : Arsenal.h Stopwatch.h gauss_quadrature.h Physicalconstants.h Matrix_elements_sq.h 
+main.cpp : Arsenal.h Stopwatch.h gauss_quadrature.h Physicalconstants.h Matrix_elements_sq.h HG_2to2_Scattering.h ParameterReader.h
 Arsenal.cpp : gauss_quadrature.h
 Matrix_elements_sq.cpp : Arsenal.h Physicalconstants.h
 Phasespace_integrals.cpp : gauss_quadrature.h Physicalconstants.h Arsenal.h Matrix_elements_sq.h 
 Table2D.cpp : Arsenal.h
 chemical_potential.cpp : Arsenal.h Table2D.h Physicalconstants.h
 Formfactor.cpp : Physicalconstants.h
+ParameterReader.cpp : Arsenal.h
+HG_2to2_Scattering.cpp : ParameterReader.h Arsenal.h Physicalconstants.h gauss_quadrature.h chemical_potential.h

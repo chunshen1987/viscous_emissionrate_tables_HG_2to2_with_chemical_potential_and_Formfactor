@@ -39,10 +39,10 @@ const int n_E1 = 20;
 const int n_E2 = 20;
 
 // parameters for output photon emission rate table
-const int n_Eq = 80;
+const int n_Eq = 1;
 const double Eq_i = 0.05;
 const double dEq = 0.05;
-const int n_Temp = 76;
+const int n_Temp = 1;
 const double T_i = 0.1;
 const double dT = 0.002;
 

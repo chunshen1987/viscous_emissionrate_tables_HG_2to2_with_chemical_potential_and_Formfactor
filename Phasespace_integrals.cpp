@@ -8,6 +8,7 @@
 #include <time.h>
 
 #include "Phasespace_integrals.h"
+#include "gauss_quadrature.h"
 using namespace std;
 
 int Calculate_emissionrates(double* m, Chemical_potential* chempotential_ptr, int channel, string filename)

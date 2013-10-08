@@ -13,11 +13,13 @@
 #include "Physicalconstants.h"
 #include "Stopwatch.h"
 #include "chemical_potential.h"
+#include "ParameterReader.h"
+#include "HG_2to2_Scattering.h"
 
 using namespace std;
 
 
-int main()
+int main(int argc, char** argv)
 {
    Stopwatch sw; 
    sw.tic();
@@ -32,6 +34,12 @@ int main()
    double m[3];
    string filename;
    
+   ParameterReader* paraRdr = new ParameterReader();
+   paraRdr->readFromFile("parameters.dat");
+   paraRdr->readFromArguments(argc, argv);
+
+   HG_2to2_Scattering test(paraRdr);
+   
 /**********************************************************************/
 // passed test
 /**********************************************************************/
@@ -43,7 +51,10 @@ int main()
    m[1] = mpion;
    m[2] = mpion;
    Calculate_emissionrates(m, chempotential_ptr, channel, filename);
-   
+   filename = "test_pion_rho_to_pion_gamma";
+   test.Calculate_emissionrates(chempotential_ptr, channel, filename);
+  
+/*
    //C.1 omega
    filename = "pion_rho_to_omega_to_pion_gamma";
    channel = 2;
@@ -91,6 +102,7 @@ int main()
    m[1] = mK;
    m[2] = mpion;
    Calculate_emissionrates(m, chempotential_ptr, channel, filename);
+*/
 
    sw.toc();
    cout << "totally takes : " << sw.takeTime() << "sec." << endl;
