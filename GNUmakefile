@@ -28,7 +28,7 @@ SRC		=	main.cpp Arsenal.cpp gauss_quadrature.cpp \
                   Matrix_elements_sq.cpp Phasespace_integrals.cpp \
                   Table2D.cpp chemical_potential.cpp Formfactor.cpp
 
-INC		= 	Arsenal.h parameters.h Stopwatch.h \
+INC		= 	Arsenal.h Physicalconstants.h Stopwatch.h \
                   Matrix_elements_sq.h Phasespace_integrals.h \
                   gauss_quadrature.h Table2D.h chemical_potential.h \
                   Formfactor.h
@@ -77,10 +77,10 @@ install:	$(TARGET)
 		cp $(TARGET) $(INSTPATH)
 
 # --------------- Dependencies -------------------
-main.cpp : Arsenal.h Stopwatch.h gauss_quadrature.h parameters.h Matrix_elements_sq.h 
+main.cpp : Arsenal.h Stopwatch.h gauss_quadrature.h Physicalconstants.h Matrix_elements_sq.h 
 Arsenal.cpp : gauss_quadrature.h
-Matrix_elements_sq.cpp : Arsenal.h parameters.h
-Phasespace_integrals.cpp : gauss_quadrature.h parameters.h Arsenal.h Matrix_elements_sq.h 
+Matrix_elements_sq.cpp : Arsenal.h Physicalconstants.h
+Phasespace_integrals.cpp : gauss_quadrature.h Physicalconstants.h Arsenal.h Matrix_elements_sq.h 
 Table2D.cpp : Arsenal.h
-chemical_potential.cpp : Arsenal.h Table2D.h parameters.h
-Formfactor.cpp : parameters.h
+chemical_potential.cpp : Arsenal.h Table2D.h Physicalconstants.h
+Formfactor.cpp : Physicalconstants.h

@@ -1,7 +1,7 @@
 #ifndef PHASESPACE_INTEGRALS_H
 #define PHASESPACE_INTEGRALS_H
 
-#include "parameters.h"
+#include "Physicalconstants.h"
 #include "Arsenal.h"
 #include "Matrix_elements_sq.h"
 #include "chemical_potential.h"
