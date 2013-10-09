@@ -19,12 +19,13 @@ class HG_2to2_Scattering
    private:
       ParameterReader *paraRdr;
 
+      double eps;
       int n_Eq, n_Temp;
       double *Eq_tb, *T_tb;
       double **equilibrium_results, **viscous_results;
 
       int channel;
-      double *m;
+      double *m, *mu;
       string filename;
       
       // Gaussian quadrature points for phase space integrations 
@@ -48,11 +49,37 @@ class HG_2to2_Scattering
       int Calculate_emissionrates(Chemical_potential* chempotential_ptr, int channel, string filename_in);
       void set_particleMass();
       void set_gausspoints();
-      double Integrate_E1(double* mu, double Eq, double T, double s, double t, double* results);
-      double Integrate_E2(double* mu, double Eq, double T, double s, double t, double E1, double* results);
+      double Integrate_E1(double Eq, double T, double s, double t, double* results);
+      double Integrate_E2(double Eq, double T, double s, double t, double E1, double* results);
       double viscous_integrand(double s, double t, double E1, double E2, double Eq, double T, double f0_E1, double f0_E2, double f0_E3);
       double Bose_distribution(double E, double T, double mu);
       double deltaf_chi(double p);
+      
+      //static call back function for gsl integration
+      double Rateintegrands(double s, void *params);
+      static double CCallback_Rateintegrands(double x, void* params)
+      {
+         CCallbackHolder* h = static_cast<CCallbackHolder*>(params);
+         return h->clsPtr->Rateintegrands(x, h->params);
+      }
+      double Rateintegrandt(double t, void *params);
+      static double CCallback_Rateintegrandt(double x, void* params)
+      {
+         CCallbackHolder* h = static_cast<CCallbackHolder*>(params);
+         return h->clsPtr->Rateintegrandt(x, h->params);
+      }
+      double RateintegrandE1(double E1, void *params);
+      static double CCallback_RateintegrandE1(double x, void* params)
+      {
+         CCallbackHolder* h = static_cast<CCallbackHolder*>(params);
+         return h->clsPtr->RateintegrandE1(x, h->params);
+      }
+      double RateintegrandE2(double E2, void *params);
+      static double CCallback_RateintegrandE2(double x, void* params)
+      {
+         CCallbackHolder* h = static_cast<CCallbackHolder*>(params);
+         return h->clsPtr->RateintegrandE2(x, h->params);
+      }
 
       //matrix elements squared
       double Matrix_elements_sq(double s, double t);

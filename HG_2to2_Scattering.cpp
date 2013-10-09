@@ -20,6 +20,7 @@ using namespace std;
 
 HG_2to2_Scattering::HG_2to2_Scattering(ParameterReader* paraRdr_in)
 {
+   eps = 1e-16;
    paraRdr = paraRdr_in;
 
    n_Eq = paraRdr->getVal("n_Eq");
@@ -79,6 +80,7 @@ HG_2to2_Scattering::HG_2to2_Scattering(ParameterReader* paraRdr_in)
    }
    
    m = new double [3];
+   mu = new double [3];
    deltaf_alpha = paraRdr->getVal("deltaf_alpha");
 
 }
@@ -123,6 +125,7 @@ HG_2to2_Scattering::~HG_2to2_Scattering()
    delete[] E2_pt_standard;
    delete[] E2_weight_standard;
    delete[] m;
+   delete[] mu;
 
 }
 
@@ -154,6 +157,7 @@ int HG_2to2_Scattering::Calculate_emissionrates(Chemical_potential* chempotentia
 
    filename = filename_in; 
    channel = channel_in;
+
    set_particleMass();
    set_gausspoints();
    
@@ -175,7 +179,6 @@ int HG_2to2_Scattering::Calculate_emissionrates(Chemical_potential* chempotentia
    double Eq;
    double formfactor;
    double T;
-   double* mu = new double [3];
    for(int j=0; j<n_Temp; j++)
    {
       T = T_tb[j];
@@ -196,7 +199,7 @@ int HG_2to2_Scattering::Calculate_emissionrates(Chemical_potential* chempotentia
              double viscous_result_t = 0.0;
              for(int l=0; l<n_t; l++)
              {
-                Integrate_E1(mu, Eq, T, s_pt[k], t_pt[k][l], results);
+                Integrate_E1(Eq, T, s_pt[k], t_pt[k][l], results);
                 equilibrium_result_t += Matrix_elements_sq_ptr[k][l]*results[0]*t_weight[k][l];
                 viscous_result_t += Matrix_elements_sq_ptr[k][l]*results[1]*t_weight[k][l];
              }
@@ -205,6 +208,44 @@ int HG_2to2_Scattering::Calculate_emissionrates(Chemical_potential* chempotentia
           }
           equilibrium_results[i][j] = equilibrium_result_s*prefactor/pow(hbarC, 4); // convert units to 1/(GeV^2 fm^4) for the emission rates
           viscous_results[i][j] = viscous_result_s*prefactor/(Eq*Eq)/pow(hbarC, 4); // convert units to 1/(GeV^4 fm^4) for the emission rates
+          
+          //integrate using gsl routines
+          cout << equilibrium_result_s << "   " << viscous_result_s << endl;
+          double s_min;
+          double m_init_sq = (m[0] + m[1])*(m[0] + m[1]);
+          double m_final_sq = m[2]*m[2];
+          if(m_init_sq > m_final_sq)
+             s_min = m_init_sq;
+          else
+             s_min = m_final_sq;
+          
+          double rateType = 0;   // rateType = 0 for equilibrium rates, rateType = 1 for viscous correction
+          double *paramsPtr = new double [3];
+          paramsPtr[0] = rateType;
+          paramsPtr[1] = T;
+          paramsPtr[2] = Eq;
+          CCallbackHolder *Callback_params = new CCallbackHolder;
+          Callback_params->clsPtr = this;
+          Callback_params->params = paramsPtr;
+          int maxInteration = 1000;
+          gsl_integration_workspace *gsl_workSpace = gsl_integration_workspace_alloc(maxInteration);
+          double gslresult_eq, gslerror_eq;
+          gsl_function gslFunc;
+          gslFunc.function = this->CCallback_Rateintegrands;
+          gslFunc.params = Callback_params;
+          
+          gsl_integration_qagiu(&gslFunc, s_min, 0, 1e-4, maxInteration, gsl_workSpace, &gslresult_eq, &gslerror_eq);
+
+          cout << gslresult_eq << "   " << gslerror_eq << endl;
+          double gslresult_vis, gslerror_vis;
+          rateType = 1;
+          paramsPtr[0] = rateType;
+          
+          gsl_integration_qagiu(&gslFunc, s_min, 0, 1e-4, maxInteration, gsl_workSpace, &gslresult_vis, &gslerror_vis);
+
+          gsl_integration_workspace_free(gsl_workSpace);
+          delete Callback_params;
+          cout << gslresult_vis << "   " << gslerror_vis << endl;
       }
    }
    output_emissionrateTable();
@@ -213,7 +254,6 @@ int HG_2to2_Scattering::Calculate_emissionrates(Chemical_potential* chempotentia
    delete[] mu2_tb;
    delete[] mu3_tb;
    delete[] Formfactor_tb;
-   delete[] mu;
    delete [] results;
 }
 
@@ -221,6 +261,7 @@ int HG_2to2_Scattering::Calculate_emissionrates(Chemical_potential* chempotentia
 void HG_2to2_Scattering::set_gausspoints()
 {
    double s_min;
+   double s_max = paraRdr->getVal("s_max");
    double m_init_sq = (m[0] + m[1])*(m[0] + m[1]);
    double m_final_sq = m[2]*m[2];
    if(m_init_sq > m_final_sq)
@@ -310,7 +351,7 @@ void HG_2to2_Scattering::set_particleMass()
 }
 
 
-double HG_2to2_Scattering::Integrate_E1(double* mu, double Eq, double T, double s, double t, double* results)
+double HG_2to2_Scattering::Integrate_E1(double Eq, double T, double s, double t, double* results)
 {
    double equilibrium_result = 0.0e0;
    double viscous_result = 0.0e0;
@@ -331,7 +372,7 @@ double HG_2to2_Scattering::Integrate_E1(double* mu, double Eq, double T, double 
 
    for(int i=0; i<n_E1; i++)
    {
-      Integrate_E2(mu, Eq, T, s, t, E1_pt[i], results);
+      Integrate_E2(Eq, T, s, t, E1_pt[i], results);
       equilibrium_result += results[0]*E1_weight[i];
       viscous_result += results[1]*E1_weight[i];
    }
@@ -345,9 +386,8 @@ double HG_2to2_Scattering::Integrate_E1(double* mu, double Eq, double T, double 
    return(0);
 }
 
-double HG_2to2_Scattering::Integrate_E2(double* mu, double Eq, double T, double s, double t, double E1, double* results)
+double HG_2to2_Scattering::Integrate_E2(double Eq, double T, double s, double t, double E1, double* results)
 {
-   double eps = 1e-100;
    double equilibrium_result = 0.0;
    double viscous_result = 0.0;
    double E2_min;
@@ -462,7 +502,6 @@ double HG_2to2_Scattering::Integrate_E2(double* mu, double Eq, double T, double 
 
 double HG_2to2_Scattering::viscous_integrand(double s, double t, double E1, double E2, double Eq, double T, double f0_E1, double f0_E2, double f0_E3)
 {
-   double eps = 1e-100;
    double m1 = m[0];
    double m2 = m[1];
    double m3 = m[2];
@@ -487,6 +526,196 @@ double HG_2to2_Scattering::Bose_distribution(double E, double T, double mu)
 double HG_2to2_Scattering::deltaf_chi(double p)
 { 
     return(pow(p, deltaf_alpha));
+}
+
+double HG_2to2_Scattering::Rateintegrands(double s, void *params)
+{
+    double *par = (double*)params;
+    double rateType = par[0];
+    double Temp = par[1];
+    double Eq = par[2];
+
+    double t_min, t_max;
+    t_min = m[0]*m[0] + m[2]*m[2] - 2*(s + m[0]*m[0] - m[1]*m[1])*(s+m[2]*m[2])
+            /4/s - 2*sqrt((s+m[0]*m[0]-m[1]*m[1])*(s+m[0]*m[0]-m[1]*m[1]) 
+            - 4*s*m[0]*m[0])*(s - m[2]*m[2])/4/s;
+    t_max = m[0]*m[0] + m[2]*m[2] - 2*(s + m[0]*m[0] - m[1]*m[1])*(s+m[2]*m[2])
+            /4/s + 2*sqrt((s+m[0]*m[0]-m[1]*m[1])*(s+m[0]*m[0]-m[1]*m[1])
+            - 4*s*m[0]*m[0])*(s - m[2]*m[2])/4/s;
+
+    double *paramsPtr = new double [4];
+    paramsPtr[0] = rateType;
+    paramsPtr[1] = Temp;
+    paramsPtr[2] = Eq;
+    paramsPtr[3] = s;
+    CCallbackHolder *Callback_params = new CCallbackHolder;
+    Callback_params->clsPtr = this;
+    Callback_params->params = paramsPtr;
+    int maxInteration = 1000;
+    gsl_integration_workspace *gsl_workSpace = gsl_integration_workspace_alloc(maxInteration);
+    double gslresult, gslerror;
+    gsl_function gslFunc;
+    gslFunc.function = this->CCallback_Rateintegrandt;
+    gslFunc.params = Callback_params;
+    
+    //gsl_integration_qags(&gslFunc, t_min, t_max, eps, 1e-4, maxInteration, gsl_workSpace, &gslresult, &gslerror);
+    int gslQAGkey = 2;
+    gsl_integration_qag(&gslFunc, t_min, t_max, eps, 1e-4, maxInteration, gslQAGkey, gsl_workSpace, &gslresult, &gslerror);
+
+    gsl_integration_workspace_free(gsl_workSpace);
+    delete Callback_params;
+    delete [] paramsPtr;
+
+    return(gslresult);
+}
+
+double HG_2to2_Scattering::Rateintegrandt(double t, void *params)
+{
+    double *par = (double*)params;
+    double rateType = par[0];
+    double Temp = par[1];
+    double Eq = par[2];
+    double s = par[3];
+
+    double E1_min;
+    double u = - s - t + m[0]*m[0] + m[1]*m[1] + m[2]*m[2];
+    E1_min = Eq*m[0]*m[0]/(m[0]*m[0] - u) + (m[0]*m[0] - u)/4/Eq;
+
+    double *paramsPtr = new double [5];
+    paramsPtr[0] = rateType;
+    paramsPtr[1] = Temp;
+    paramsPtr[2] = Eq;
+    paramsPtr[3] = s;
+    paramsPtr[4] = t;
+    CCallbackHolder *Callback_params = new CCallbackHolder;
+    Callback_params->clsPtr = this;
+    Callback_params->params = paramsPtr;
+    int maxInteration = 1000;
+    gsl_integration_workspace *gsl_workSpace = gsl_integration_workspace_alloc(maxInteration);
+    double gslresult, gslerror;
+    gsl_function gslFunc;
+    gslFunc.function = this->CCallback_RateintegrandE1;
+    gslFunc.params = Callback_params;
+    
+    gsl_integration_qagiu(&gslFunc, E1_min, 0, 1e-4, maxInteration, gsl_workSpace, &gslresult, &gslerror);
+
+    gsl_integration_workspace_free(gsl_workSpace);
+    delete Callback_params;
+    delete [] paramsPtr;
+
+    double matrixElementsSq = Matrix_elements_sq(s, t);
+
+    return(gslresult*matrixElementsSq);
+}
+
+double HG_2to2_Scattering::RateintegrandE1(double E1, void *params)
+{
+    double result;
+    double *par = (double*)params;
+    double rateType = par[0];
+    double Temp = par[1];
+    double Eq = par[2];
+    double s = par[3];
+    double t = par[4];
+
+    double E2_min;
+    double E2_max;
+    double min_1 = Eq*m[1]*m[1]/(m[1]*m[1] - t) + (m[1]*m[1] - t)/4/Eq;
+
+   double a = - (s + t - m[1]*m[1] - m[2]*m[2])*(s + t - m[1]*m[1] - m[2]*m[2]);
+   double b = Eq*((s + t - m[1]*m[1] - m[2]*m[2])*(s - m[0]*m[0] - m[1]*m[1]) 
+              - 2*m[0]*m[0]*(m[1]*m[1] - t)) + E1*(m[1]*m[1] - t)
+              *(s + t - m[1]*m[1] - m[2]*m[2]);
+   double c = - (t - m[1]*m[1])*(t - m[1]*m[1])*E1*E1
+              - 2*Eq*(2*m[1]*m[1]*(s + t - m[1]*m[1] - m[2]*m[2]) 
+              - (m[1]*m[1] - t)*(s - m[0]*m[0] - m[1]*m[1]))*E1
+              + 4*Eq*Eq*m[0]*m[0]*m[1]*m[1] + m[1]*m[1]*(s + t - m[1]*m[1] 
+              - m[2]*m[2])*(s + t - m[1]*m[1] - m[2]*m[2]) + m[0]*m[0]
+              *(m[1]*m[1] -t)*(m[1]*m[1] -t)
+              - Eq*Eq*(s - m[0]*m[0] - m[1]*m[1])*(s - m[0]*m[0] - m[1]*m[1])
+              + (s - m[0]*m[0] - m[1]*m[1])*(t - m[1]*m[1])*(s + t - m[1]*m[1] 
+              - m[2]*m[2]);
+    
+    if((b*b - a*c) >= 0) 
+    {
+       double min_2 = (-b + sqrt(b*b - a*c))/(a + eps);
+       if(min_1 < min_2)
+          E2_min = min_2;
+       else
+          E2_min = min_1;
+       E2_max = (-b - sqrt(b*b - a*c))/(a - eps);
+
+       if(E2_max < E2_min) return(0.0);
+
+       double *paramsPtr = new double [9];
+       paramsPtr[0] = rateType;
+       paramsPtr[1] = Temp;
+       paramsPtr[2] = Eq;
+       paramsPtr[3] = s;
+       paramsPtr[4] = t;
+       paramsPtr[5] = E1;
+       paramsPtr[6] = a;
+       paramsPtr[7] = b;
+       paramsPtr[8] = c;
+       CCallbackHolder *Callback_params = new CCallbackHolder;
+       Callback_params->clsPtr = this;
+       Callback_params->params = paramsPtr;
+       int maxInteration = 1000;
+       gsl_integration_workspace *gsl_workSpace = gsl_integration_workspace_alloc(maxInteration);
+       double gslresult, gslerror;
+       gsl_function gslFunc;
+       gslFunc.function = this->CCallback_RateintegrandE2;
+       gslFunc.params = Callback_params;
+       gsl_integration_qaws_table* gslQAWSptr = gsl_integration_qaws_table_alloc(-0.5, -0.5, 0, 0);
+       
+//       gsl_integration_qags(&gslFunc, E2_min+eps, E2_max-eps, 0, 1e-4, maxInteration, gsl_workSpace, &gslresult, &gslerror);
+       gsl_integration_qaws(&gslFunc, E2_min+eps, E2_max-eps, gslQAWSptr, eps, 1e-4, maxInteration, gsl_workSpace, &gslresult, &gslerror);
+
+       gsl_integration_qaws_table_free(gslQAWSptr);
+       gsl_integration_workspace_free(gsl_workSpace);
+       delete Callback_params;
+       delete [] paramsPtr;
+
+       result = gslresult;
+    }
+    else  // no kinematic phase space
+    {
+       result = 0.0e0;
+    }
+    return(result);
+}
+
+double HG_2to2_Scattering::RateintegrandE2(double E2, void *params)
+{
+    double *par = (double*)params;
+    int rateType = (int) par[0];
+    double Temp = par[1];
+    double Eq = par[2];
+    double s = par[3];
+    double t = par[4];
+    double E1 = par[5];
+    double a = par[6];
+    double b = par[7];
+    double c = par[8];
+
+    double mu1 = mu[0];
+    double mu2 = mu[1];
+    double mu3 = mu[2];
+    double f0_E1 = Bose_distribution(E1, Temp, mu1);
+    double f0_E2 = Bose_distribution(E2, Temp, mu2);
+    double f0_E3 = Bose_distribution(E1 + E2 - Eq, Temp, mu3);
+    //double common_factor = f0_E1*f0_E2*(1 + f0_E3)/(sqrt(a*E2*E2 + 2*b*E2 + c) + eps);
+    double common_factor = f0_E1*f0_E2*(1 + f0_E3);
+ 
+    double result;
+    if(rateType == 0)
+    {
+       result = common_factor;
+    }
+    else
+       result = common_factor*viscous_integrand(s, t, E1, E2, Eq, Temp, f0_E1, f0_E2, f0_E3);
+
+    return(result);
 }
 
 double HG_2to2_Scattering::Matrix_elements_sq(double s, double t)

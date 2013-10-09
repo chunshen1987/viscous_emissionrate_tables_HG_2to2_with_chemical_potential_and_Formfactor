@@ -8,8 +8,6 @@
 #include <time.h>
 
 #include "Arsenal.h"
-#include "Matrix_elements_sq.h"
-#include "Phasespace_integrals.h"
 #include "Physicalconstants.h"
 #include "Stopwatch.h"
 #include "chemical_potential.h"
@@ -47,14 +45,15 @@ int main(int argc, char** argv)
    //C.1
    filename = "pion_rho_to_pion_gamma";
    channel = 1;
+   test.Calculate_emissionrates(chempotential_ptr, channel, filename);
+   
+/*   
    m[0] = mrho;
    m[1] = mpion;
    m[2] = mpion;
    Calculate_emissionrates(m, chempotential_ptr, channel, filename);
-   filename = "test_pion_rho_to_pion_gamma";
-   test.Calculate_emissionrates(chempotential_ptr, channel, filename);
   
-/*
+
    //C.1 omega
    filename = "pion_rho_to_omega_to_pion_gamma";
    channel = 2;

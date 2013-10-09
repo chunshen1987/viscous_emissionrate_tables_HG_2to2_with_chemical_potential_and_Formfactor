@@ -27,8 +27,9 @@ const double eta1 = ((g_tilde*F_pi_tilde/(2*mV*mV))*sqrt((1-gamma_parameter)/(1+
 const double eta2 = ((g_tilde*F_pi_tilde/(2*mV*mV))*sqrt((1+gamma_parameter)/(1-gamma_parameter)) - 4*gamma_parameter/(F_pi_tilde*g_tilde*sqrt(1-pow(gamma_parameter,2))));
 const double C4 = ((pow(g_tilde*F_pi_tilde,2)/(16*pow(mV,4)))*((1+gamma_parameter)/(1-gamma_parameter)) - gamma_parameter/(mV*mV*(1-gamma_parameter))+ 2*gamma_parameter/(pow(g_tilde*F_pi_tilde,2)*(1-gamma_parameter)));
 
+/*
 // parameters for non-thermal equilibrium delta f correction
-const double deltaf_alpha = 1;   //the exponent of the p dependence of the delta f correction deltaf_alpha = 2 for democratic choice
+const double deltaf_alpha = 2;   //the exponent of the p dependence of the delta f correction deltaf_alpha = 2 for democratic choice
 
 // parameters for numerical integrations
 const int n_s = 100;
@@ -45,5 +46,5 @@ const double dEq = 0.05;
 const int n_Temp = 1;
 const double T_i = 0.1;
 const double dT = 0.002;
-
+*/
 #endif

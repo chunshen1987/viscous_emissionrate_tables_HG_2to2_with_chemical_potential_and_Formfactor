@@ -25,12 +25,10 @@ MAIN		=	cal_photon_emissionrate_tables.e
 endif
 
 SRC		=	main.cpp Arsenal.cpp gauss_quadrature.cpp \
-                  Matrix_elements_sq.cpp Phasespace_integrals.cpp \
                   Table2D.cpp chemical_potential.cpp Formfactor.cpp \
                   HG_2to2_Scattering.cpp ParameterReader.cpp
 
 INC		= 	Arsenal.h Physicalconstants.h Stopwatch.h \
-                  Matrix_elements_sq.h Phasespace_integrals.h \
                   gauss_quadrature.h Table2D.h chemical_potential.h \
                   Formfactor.h HG_2to2_Scattering.h ParameterReader.h
 
@@ -78,10 +76,8 @@ install:	$(TARGET)
 		cp $(TARGET) $(INSTPATH)
 
 # --------------- Dependencies -------------------
-main.cpp : Arsenal.h Stopwatch.h gauss_quadrature.h Physicalconstants.h Matrix_elements_sq.h HG_2to2_Scattering.h ParameterReader.h
+main.cpp : Arsenal.h Stopwatch.h gauss_quadrature.h Physicalconstants.h HG_2to2_Scattering.h ParameterReader.h
 Arsenal.cpp : gauss_quadrature.h
-Matrix_elements_sq.cpp : Arsenal.h Physicalconstants.h
-Phasespace_integrals.cpp : gauss_quadrature.h Physicalconstants.h Arsenal.h Matrix_elements_sq.h 
 Table2D.cpp : Arsenal.h
 chemical_potential.cpp : Arsenal.h Table2D.h Physicalconstants.h
 Formfactor.cpp : Physicalconstants.h
