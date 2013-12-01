@@ -190,7 +190,7 @@ int HG_2to2_Scattering::Calculate_emissionrates(Chemical_potential* chempotentia
           Eq = Eq_tb[i];
           formfactor = Formfactor_tb[i];
           double prefactor = 1./16./pow(2.0*M_PI, 7)/Eq*formfactor;
-/*
+          
           double equilibrium_result_s = 0.0;
           double viscous_result_s = 0.0;
           for(int k=0; k<n_s; k++)
@@ -206,46 +206,8 @@ int HG_2to2_Scattering::Calculate_emissionrates(Chemical_potential* chempotentia
              equilibrium_result_s += equilibrium_result_t*s_weight[k];
              viscous_result_s += viscous_result_t*s_weight[k];
           }
-*/
-          //integrate using gsl routines
-          cout << T << "   " << Eq << endl;
-          double s_min;
-          double m_init_sq = (m[0] + m[1])*(m[0] + m[1]);
-          double m_final_sq = m[2]*m[2];
-          if(m_init_sq > m_final_sq)
-             s_min = m_init_sq;
-          else
-             s_min = m_final_sq;
-          
-          double rateType = 0;   // rateType = 0 for equilibrium rates, rateType = 1 for viscous correction
-          double *paramsPtr = new double [3];
-          paramsPtr[0] = rateType;
-          paramsPtr[1] = T;
-          paramsPtr[2] = Eq;
-          CCallbackHolder *Callback_params = new CCallbackHolder;
-          Callback_params->clsPtr = this;
-          Callback_params->params = paramsPtr;
-          int maxInteration = 1000;
-          gsl_integration_workspace *gsl_workSpace = gsl_integration_workspace_alloc(maxInteration);
-
-          double gslresult_eq, gslerror_eq;
-          int status;
-          gsl_function gslFunc;
-          gslFunc.function = this->CCallback_Rateintegrands;
-          gslFunc.params = Callback_params;
-          status = gsl_integration_qagiu(&gslFunc, s_min, 0, 1e-4, maxInteration, gsl_workSpace, &gslresult_eq, &gslerror_eq);
-
-          double gslresult_vis, gslerror_vis;
-          rateType = 1;
-          paramsPtr[0] = rateType;
-          status = gsl_integration_qagiu(&gslFunc, s_min, 0, 1e-4, maxInteration, gsl_workSpace, &gslresult_vis, &gslerror_vis);
-
-          gsl_integration_workspace_free(gsl_workSpace);
-          delete Callback_params;
-//          cout << equilibrium_result_s << "   " << viscous_result_s << endl;
-//          cout << gslresult_eq << "   " << gslresult_vis << endl;
-          equilibrium_results[i][j] = gslresult_eq*prefactor/pow(hbarC, 4); // convert units to 1/(GeV^2 fm^4) for the emission rates
-          viscous_results[i][j] = gslresult_vis*prefactor/(Eq*Eq)/pow(hbarC, 4); // convert units to 1/(GeV^4 fm^4) for the emission rates
+          equilibrium_results[i][j] = equilibrium_result_s*prefactor/pow(hbarC, 4); // convert units to 1/(GeV^2 fm^4) for the emission rates
+          viscous_results[i][j] = viscous_result_s*prefactor/(Eq*Eq)/pow(hbarC, 4); // convert units to 1/(GeV^4 fm^4) for the emission rates
       }
    }
    output_emissionrateTable();
@@ -255,6 +217,7 @@ int HG_2to2_Scattering::Calculate_emissionrates(Chemical_potential* chempotentia
    delete[] mu3_tb;
    delete[] Formfactor_tb;
    delete [] results;
+   return 0;
 }
 
 
