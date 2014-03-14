@@ -8,16 +8,16 @@
 #include <time.h>
 
 #include "Arsenal.h"
-#include "Matrix_elements_sq.h"
-#include "Phasespace_integrals.h"
-#include "parameters.h"
+#include "Physicalconstants.h"
 #include "Stopwatch.h"
 #include "chemical_potential.h"
+#include "ParameterReader.h"
+#include "HG_2to2_Scattering.h"
 
 using namespace std;
 
 
-int main()
+int main(int argc, char** argv)
 {
    Stopwatch sw; 
    sw.tic();
@@ -29,68 +29,53 @@ int main()
    chempotential_ptr->Set_chemical_potential_s95pv0PCE();
 
    int channel = 0;
-   double m[3];
    string filename;
+   
+   ParameterReader* paraRdr = new ParameterReader();
+   paraRdr->readFromFile("parameters.dat");
+   paraRdr->readFromArguments(argc, argv);
+
+   HG_2to2_Scattering HG2to2Rates(paraRdr);
    
 /**********************************************************************/
 // passed test
 /**********************************************************************/
    
+   int status;
    //C.1
    filename = "pion_rho_to_pion_gamma";
    channel = 1;
-   m[0] = mrho;
-   m[1] = mpion;
-   m[2] = mpion;
-   Calculate_emissionrates(m, chempotential_ptr, channel, filename);
+   status = HG2to2Rates.Calculate_emissionrates(chempotential_ptr, channel, filename);
    
    //C.1 omega
    filename = "pion_rho_to_omega_to_pion_gamma";
    channel = 2;
-   m[0] = mrho;
-   m[1] = mpion;
-   m[2] = mpion;
-   Calculate_emissionrates(m, chempotential_ptr, channel, filename);
+   status = HG2to2Rates.Calculate_emissionrates(chempotential_ptr, channel, filename);
   
    //C.2
    filename = "pion_pion_to_rho_gamma";
    channel = 3;
-   m[0] = mpion;
-   m[1] = mpion;
-   m[2] = mrho;
-   Calculate_emissionrates(m, chempotential_ptr, channel, filename);
+   status = HG2to2Rates.Calculate_emissionrates(chempotential_ptr, channel, filename);
 
    //C.4
    filename = "pion_Kstar_to_K_gamma";
    channel = 4;
-   m[0] = mKstar;
-   m[1] = mpion;
-   m[2] = mK;
-   Calculate_emissionrates(m, chempotential_ptr, channel, filename);
+   status = HG2to2Rates.Calculate_emissionrates(chempotential_ptr, channel, filename);
 
    //C.5
    filename = "pion_K_to_Kstar_gamma";
    channel = 5;
-   m[0] = mK;
-   m[1] = mpion;
-   m[2] = mKstar;
-   Calculate_emissionrates(m, chempotential_ptr, channel, filename);
+   status = HG2to2Rates.Calculate_emissionrates(chempotential_ptr, channel, filename);
 
    //C.6
    filename = "rho_K_to_K_gamma";
    channel = 6;
-   m[0] = mrho;
-   m[1] = mK;
-   m[2] = mK;
-   Calculate_emissionrates(m, chempotential_ptr, channel, filename);
+   status = HG2to2Rates.Calculate_emissionrates(chempotential_ptr, channel, filename);
 
    //C.7
    filename = "K_Kstar_to_pion_gamma";
    channel = 7;
-   m[0] = mKstar;
-   m[1] = mK;
-   m[2] = mpion;
-   Calculate_emissionrates(m, chempotential_ptr, channel, filename);
+   status = HG2to2Rates.Calculate_emissionrates(chempotential_ptr, channel, filename);
 
    sw.toc();
    cout << "totally takes : " << sw.takeTime() << "sec." << endl;
