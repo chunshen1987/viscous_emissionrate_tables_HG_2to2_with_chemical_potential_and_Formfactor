@@ -223,7 +223,7 @@ int HG_2to2_Scattering::Calculate_emissionrates(Chemical_potential* chempotentia
           }
           equilibrium_results[i][j] = equilibrium_result_s*prefactor/pow(hbarC, 4); // convert units to 1/(GeV^2 fm^4) for the emission rates
           viscous_results[i][j] = viscous_result_s*prefactor/(Eq*Eq)/pow(hbarC, 4); // convert units to 1/(GeV^4 fm^4) for the emission rates
-          bulkvis_results[i][j] = bulkvis_result_s*prefactor/(Eq*Eq)/pow(hbarC, 4); // convert units to 1/(GeV^4 fm^4) for the emission rates
+          bulkvis_results[i][j] = bulkvis_result_s*prefactor/pow(hbarC, 4); // convert units to 1/(GeV^4 fm^4) for the emission rates
       }
    }
    output_emissionrateTable();
@@ -416,6 +416,10 @@ double HG_2to2_Scattering::Integrate_E2(double Eq, double T, double s, double t,
       double* E2_pt = new double [n_E2];
       double* E2_weight = new double [n_E2];
 
+      double* bulkvis_B0 = new double [3];
+      double* bulkvis_D0 = new double [3];
+      double* bulkvis_E0 = new double [3];
+
       if(channel == 3 || channel == 5)
       {
          double E2_cut = E2_min + (E2_max - E2_min)/100.;
@@ -433,7 +437,9 @@ double HG_2to2_Scattering::Integrate_E2(double Eq, double T, double s, double t,
             common_factor = f0_E1*f0_E2*(1 + f0_E3)/(sqrt(a*E2_pt[i]*E2_pt[i] + 2*b*E2_pt[i] + c) + eps);
             equilibrium_result += common_factor*1.*E2_weight[i];
             viscous_result += common_factor*viscous_integrand(s, t, E1, E2_pt[i], Eq, T, f0_E1, f0_E2, f0_E3)*E2_weight[i];
-            bulkvis_result += common_factor*bulkvis_integrand(s, t, E1, E2_pt[i], Eq, T, f0_E1, f0_E2, f0_E3)*E2_weight[i];
+
+            get_bulkvis_coefficients(T, bulkvis_B0, bulkvis_D0, bulkvis_E0);
+            bulkvis_result += common_factor*bulkvis_integrand(E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_B0, bulkvis_D0, bulkvis_E0)*E2_weight[i];
          }
 
          for(int i=0; i<n_E2; i++)
@@ -450,7 +456,9 @@ double HG_2to2_Scattering::Integrate_E2(double Eq, double T, double s, double t,
             common_factor = f0_E1*f0_E2*(1 + f0_E3)/(sqrt(a*E2_pt[i]*E2_pt[i] + 2*b*E2_pt[i] + c) + eps);
             equilibrium_result += common_factor*1.*E2_weight[i];
             viscous_result += common_factor*viscous_integrand(s, t, E1, E2_pt[i], Eq, T, f0_E1, f0_E2, f0_E3)*E2_weight[i];
-            bulkvis_result += common_factor*bulkvis_integrand(s, t, E1, E2_pt[i], Eq, T, f0_E1, f0_E2, f0_E3)*E2_weight[i];
+
+            get_bulkvis_coefficients(T, bulkvis_B0, bulkvis_D0, bulkvis_E0);
+            bulkvis_result += common_factor*bulkvis_integrand(E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_B0, bulkvis_D0, bulkvis_E0)*E2_weight[i];
          }
       }
       else
@@ -469,12 +477,17 @@ double HG_2to2_Scattering::Integrate_E2(double Eq, double T, double s, double t,
             common_factor = f0_E1*f0_E2*(1 + f0_E3)/(sqrt(a*E2_pt[i]*E2_pt[i] + 2*b*E2_pt[i] + c) + eps);
             equilibrium_result += common_factor*1.*E2_weight[i];
             viscous_result += common_factor*viscous_integrand(s, t, E1, E2_pt[i], Eq, T, f0_E1, f0_E2, f0_E3)*E2_weight[i];
-            bulkvis_result += common_factor*bulkvis_integrand(s, t, E1, E2_pt[i], Eq, T, f0_E1, f0_E2, f0_E3)*E2_weight[i];
+
+            get_bulkvis_coefficients(T, bulkvis_B0, bulkvis_D0, bulkvis_E0);
+            bulkvis_result += common_factor*bulkvis_integrand(E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_B0, bulkvis_D0, bulkvis_E0)*E2_weight[i];
          }
       }
 
       delete[] E2_pt;
       delete[] E2_weight;
+      delete[] bulkvis_B0;
+      delete[] bulkvis_D0;
+      delete[] bulkvis_E0;
    }
    else  // no kinematic phase space
    {
@@ -601,18 +614,9 @@ void HG_2to2_Scattering::get_bulkvis_coefficients(double T, double* bulkvis_B0, 
    return;
 }
 
-double HG_2to2_Scattering::bulkvis_integrand(double s, double t, double E1, double E2, double Eq, double T, double f0_E1, double f0_E2, double f0_E3)
+double HG_2to2_Scattering::bulkvis_integrand(double E1, double E2, double Eq, double f0_E1, double f0_E2, double f0_E3, double* bulkvis_B0, double* bulkvis_D0, double* bulkvis_E0)
 {
-   double m1 = m[0];
-   double m2 = m[1];
-   double m3 = m[2];
    double E3 = E1 + E2 - Eq;
-   double *bulkvis_B0 = new double [3];
-   double *bulkvis_D0 = new double [3];
-   double *bulkvis_E0 = new double [3];
-
-   get_bulkvis_coefficients(T, bulkvis_B0, bulkvis_D0, bulkvis_E0);
-   
    double integrand = (1. + f0_E1)*(bulkvis_B0[0] + E1*bulkvis_D0[0] + E1*E1*bulkvis_E0[0])
                       + (1. + f0_E2)*(bulkvis_B0[1] + E2*bulkvis_D0[1] + E2*E2*bulkvis_E0[1])
                       + f0_E3*(bulkvis_B0[2] + E3*bulkvis_D0[2] + E3*E3*bulkvis_E0[2]);
@@ -818,7 +822,16 @@ double HG_2to2_Scattering::RateintegrandE2(double E2, void *params)
     else if (rateType == 1)
        result = common_factor*viscous_integrand(s, t, E1, E2, Eq, Temp, f0_E1, f0_E2, f0_E3);
     else
-       result = common_factor*bulkvis_integrand(s, t, E1, E2, Eq, Temp, f0_E1, f0_E2, f0_E3);
+    {
+       double* bulkvis_B0 = new double [3];
+       double* bulkvis_D0 = new double [3];
+       double* bulkvis_E0 = new double [3];
+       get_bulkvis_coefficients(Temp, bulkvis_B0, bulkvis_D0, bulkvis_E0);
+       result = common_factor*bulkvis_integrand(E1, E2, Eq, f0_E1, f0_E2, f0_E3, bulkvis_B0, bulkvis_D0, bulkvis_E0);
+       delete[] bulkvis_B0;
+       delete[] bulkvis_D0;
+       delete[] bulkvis_E0;
+    }
 
     return(result);
 }
