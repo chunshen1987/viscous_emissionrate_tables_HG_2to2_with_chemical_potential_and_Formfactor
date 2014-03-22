@@ -507,20 +507,115 @@ double HG_2to2_Scattering::viscous_integrand(double s, double t, double E1, doub
    return(integrand);
 }
 
+void HG_2to2_Scattering::get_bulkvis_coefficients(double T, double* bulkvis_B0, double* bulkvis_D0, double * bulkvis_E0)
+{
+   if(channel == 1)
+   {
+      bulkvis_B0[0] = 0.0;
+      bulkvis_D0[0] = 0.0;
+      bulkvis_E0[0] = 0.0;
+      bulkvis_B0[1] = 0.0;
+      bulkvis_D0[1] = 0.0;
+      bulkvis_E0[1] = 0.0;
+      bulkvis_B0[2] = 0.0;
+      bulkvis_D0[2] = 0.0;
+      bulkvis_E0[2] = 0.0;
+   }
+   else if(channel == 2)
+   {
+      bulkvis_B0[0] = 0.0;
+      bulkvis_D0[0] = 0.0;
+      bulkvis_E0[0] = 0.0;
+      bulkvis_B0[1] = 0.0;
+      bulkvis_D0[1] = 0.0;
+      bulkvis_E0[1] = 0.0;
+      bulkvis_B0[2] = 0.0;
+      bulkvis_D0[2] = 0.0;
+      bulkvis_E0[2] = 0.0;
+   }
+   else if(channel == 3)
+   {
+      bulkvis_B0[0] = 0.0;
+      bulkvis_D0[0] = 0.0;
+      bulkvis_E0[0] = 0.0;
+      bulkvis_B0[1] = 0.0;
+      bulkvis_D0[1] = 0.0;
+      bulkvis_E0[1] = 0.0;
+      bulkvis_B0[2] = 0.0;
+      bulkvis_D0[2] = 0.0;
+      bulkvis_E0[2] = 0.0;
+   }
+   else if(channel == 4)
+   {
+      bulkvis_B0[0] = 0.0;
+      bulkvis_D0[0] = 0.0;
+      bulkvis_E0[0] = 0.0;
+      bulkvis_B0[1] = 0.0;
+      bulkvis_D0[1] = 0.0;
+      bulkvis_E0[1] = 0.0;
+      bulkvis_B0[2] = 0.0;
+      bulkvis_D0[2] = 0.0;
+      bulkvis_E0[2] = 0.0;
+   }
+   else if(channel == 5)
+   {
+      bulkvis_B0[0] = 0.0;
+      bulkvis_D0[0] = 0.0;
+      bulkvis_E0[0] = 0.0;
+      bulkvis_B0[1] = 0.0;
+      bulkvis_D0[1] = 0.0;
+      bulkvis_E0[1] = 0.0;
+      bulkvis_B0[2] = 0.0;
+      bulkvis_D0[2] = 0.0;
+      bulkvis_E0[2] = 0.0;
+   }
+   else if(channel == 6)
+   {
+      bulkvis_B0[0] = 0.0;
+      bulkvis_D0[0] = 0.0;
+      bulkvis_E0[0] = 0.0;
+      bulkvis_B0[1] = 0.0;
+      bulkvis_D0[1] = 0.0;
+      bulkvis_E0[1] = 0.0;
+      bulkvis_B0[2] = 0.0;
+      bulkvis_D0[2] = 0.0;
+      bulkvis_E0[2] = 0.0;
+   }
+   else if(channel == 7)
+   {
+      bulkvis_B0[0] = 0.0;
+      bulkvis_D0[0] = 0.0;
+      bulkvis_E0[0] = 0.0;
+      bulkvis_B0[1] = 0.0;
+      bulkvis_D0[1] = 0.0;
+      bulkvis_E0[1] = 0.0;
+      bulkvis_B0[2] = 0.0;
+      bulkvis_D0[2] = 0.0;
+      bulkvis_E0[2] = 0.0;
+   }
+   else
+   {
+      cout << "Error:: get_bulkvis_coefficients: input channel is invalid, channel = " << channel << endl;
+      exit(1);
+   }
+   return;
+}
+
 double HG_2to2_Scattering::bulkvis_integrand(double s, double t, double E1, double E2, double Eq, double T, double f0_E1, double f0_E2, double f0_E3)
 {
    double m1 = m[0];
    double m2 = m[1];
    double m3 = m[2];
    double E3 = E1 + E2 - Eq;
-   double p1 = sqrt(E1*E1 - m1*m1);
-   double p2 = sqrt(E2*E2 - m2*m2);
-   double p3 = sqrt(E3*E3 - m3*m3);
-   double costheta1 = (- s - t + m2*m2 + m3*m3 + 2*E1*Eq)/(2*p1*Eq + eps);
-   double costheta2 = (t - m2*m2 + 2*E2*Eq)/(2*p2*Eq + eps);
-   double p3_z = p1*costheta1 + p2*costheta2 - Eq; 
+   double *bulkvis_B0 = new double [3];
+   double *bulkvis_D0 = new double [3];
+   double *bulkvis_E0 = new double [3];
+
+   get_bulkvis_coefficients(T, bulkvis_B0, bulkvis_D0, bulkvis_E0);
    
-   double integrand = (1. + f0_E1)*deltaf_chi(p1/T)*0.5*(-1. + 3.*costheta1*costheta1) + (1. + f0_E2)*deltaf_chi(p2/T)*0.5*(-1. + 3.*costheta2*costheta2) + f0_E3*deltaf_chi(p3/T)/p3/p3*(-0.5*p3*p3 + 1.5*p3_z*p3_z);
+   double integrand = (1. + f0_E1)*(bulkvis_B0[0] + E1*bulkvis_D0[0] + E1*E1*bulkvis_E0[0])
+                      + (1. + f0_E2)*(bulkvis_B0[1] + E2*bulkvis_D0[1] + E2*E2*bulkvis_E0[1])
+                      + f0_E3*(bulkvis_B0[2] + E3*bulkvis_D0[2] + E3*E3*bulkvis_E0[2]);
 
    return(integrand);
 }
