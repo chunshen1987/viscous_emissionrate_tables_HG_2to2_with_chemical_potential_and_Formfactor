@@ -2,6 +2,7 @@
 #define HG_2to2_Scattering_H
 
 #include <string>
+#include "Table.h"
 #include "ParameterReader.h"
 #include "Physicalconstants.h"
 #include "chemical_potential.h"
@@ -40,6 +41,9 @@ class HG_2to2_Scattering
       double **E2_pt_standard, **E2_weight_standard;
 
       double deltaf_alpha;
+
+      //table for bulk delta f coefficients
+      Table *bulkdf_coeff;
 
    public:
       HG_2to2_Scattering(ParameterReader* paraRdr_in);
