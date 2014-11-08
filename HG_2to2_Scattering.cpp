@@ -84,9 +84,10 @@ HG_2to2_Scattering::HG_2to2_Scattering(ParameterReader* paraRdr_in)
    m = new double [3];
    mu = new double [3];
    deltaf_alpha = paraRdr->getVal("deltaf_alpha");
+   bulk_deltaf_kind = paraRdr->getVal("bulk_deltaf_kind");
 
-   bulkdf_coeff = new Table ("chemical_potential_tb/s95p/s95p-PCE165-v0/BulkDf_Coefficients_Hadrons_CE.dat");
-
+   if(bulk_deltaf_kind == 0)
+       bulkdf_coeff = new Table ("chemical_potential_tb/s95p/s95p-PCE165-v0/BulkDf_Coefficients_Hadrons_CE.dat");
 }
 
 HG_2to2_Scattering::~HG_2to2_Scattering()
@@ -133,7 +134,8 @@ HG_2to2_Scattering::~HG_2to2_Scattering()
    delete[] m;
    delete[] mu;
    
-   delete bulkdf_coeff;
+   if(bulkvis_results == 0)
+       delete bulkdf_coeff;
 }
 
 void HG_2to2_Scattering::output_emissionrateTable()
@@ -441,8 +443,17 @@ double HG_2to2_Scattering::Integrate_E2(double Eq, double T, double s, double t,
             equilibrium_result += common_factor*1.*E2_weight[i];
             viscous_result += common_factor*viscous_integrand(s, t, E1, E2_pt[i], Eq, T, f0_E1, f0_E2, f0_E3)*E2_weight[i];
 
-            get_bulkvis_coefficients(T, bulkvis_B0, bulkvis_D0, bulkvis_E0);
-            bulkvis_result += common_factor*bulkvis_integrand(E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_B0, bulkvis_D0, bulkvis_E0)*E2_weight[i];
+            if(bulk_deltaf_kind == 0)
+            {
+                get_bulkvis_coefficients_14moment(T, bulkvis_B0, bulkvis_D0, bulkvis_E0);
+                bulkvis_result += common_factor*bulkvis_integrand_14moment(E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_B0, bulkvis_D0, bulkvis_E0)*E2_weight[i];
+            }
+            else if(bulk_deltaf_kind == 1)
+            {
+                double bulkvis_Cbulk, bulkvis_e2;
+                get_bulkvis_coefficients_relaxation(T, &bulkvis_Cbulk, &bulkvis_e2);
+                bulkvis_result += common_factor*bulkvis_integrand_relaxation(T, E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_Cbulk, bulkvis_e2)*E2_weight[i];
+            }
          }
 
          for(int i=0; i<n_E2; i++)
@@ -460,8 +471,17 @@ double HG_2to2_Scattering::Integrate_E2(double Eq, double T, double s, double t,
             equilibrium_result += common_factor*1.*E2_weight[i];
             viscous_result += common_factor*viscous_integrand(s, t, E1, E2_pt[i], Eq, T, f0_E1, f0_E2, f0_E3)*E2_weight[i];
 
-            get_bulkvis_coefficients(T, bulkvis_B0, bulkvis_D0, bulkvis_E0);
-            bulkvis_result += common_factor*bulkvis_integrand(E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_B0, bulkvis_D0, bulkvis_E0)*E2_weight[i];
+            if(bulk_deltaf_kind == 0)
+            {
+                get_bulkvis_coefficients_14moment(T, bulkvis_B0, bulkvis_D0, bulkvis_E0);
+                bulkvis_result += common_factor*bulkvis_integrand_14moment(E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_B0, bulkvis_D0, bulkvis_E0)*E2_weight[i];
+            }
+            else if(bulk_deltaf_kind == 1)
+            {
+                double bulkvis_Cbulk, bulkvis_e2;
+                get_bulkvis_coefficients_relaxation(T, &bulkvis_Cbulk, &bulkvis_e2);
+                bulkvis_result += common_factor*bulkvis_integrand_relaxation(T, E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_Cbulk, bulkvis_e2)*E2_weight[i];
+            }
          }
       }
       else
@@ -481,8 +501,17 @@ double HG_2to2_Scattering::Integrate_E2(double Eq, double T, double s, double t,
             equilibrium_result += common_factor*1.*E2_weight[i];
             viscous_result += common_factor*viscous_integrand(s, t, E1, E2_pt[i], Eq, T, f0_E1, f0_E2, f0_E3)*E2_weight[i];
 
-            get_bulkvis_coefficients(T, bulkvis_B0, bulkvis_D0, bulkvis_E0);
-            bulkvis_result += common_factor*bulkvis_integrand(E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_B0, bulkvis_D0, bulkvis_E0)*E2_weight[i];
+            if(bulk_deltaf_kind == 0)
+            {
+                get_bulkvis_coefficients_14moment(T, bulkvis_B0, bulkvis_D0, bulkvis_E0);
+                bulkvis_result += common_factor*bulkvis_integrand_14moment(E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_B0, bulkvis_D0, bulkvis_E0)*E2_weight[i];
+            }
+            else if(bulk_deltaf_kind == 1)
+            {
+                double bulkvis_Cbulk, bulkvis_e2;
+                get_bulkvis_coefficients_relaxation(T, &bulkvis_Cbulk, &bulkvis_e2);
+                bulkvis_result += common_factor*bulkvis_integrand_relaxation(T, E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_Cbulk, bulkvis_e2)*E2_weight[i];
+            }
          }
       }
 
@@ -523,7 +552,7 @@ double HG_2to2_Scattering::viscous_integrand(double s, double t, double E1, doub
    return(integrand);
 }
 
-void HG_2to2_Scattering::get_bulkvis_coefficients(double T, double* bulkvis_B0, double* bulkvis_D0, double * bulkvis_E0)
+void HG_2to2_Scattering::get_bulkvis_coefficients_14moment(double T, double* bulkvis_B0, double* bulkvis_D0, double * bulkvis_E0)
 // coefficients for bulk viscous corrections (fits from Gabriel Denicol, derived from 14 moments expansion)
 {
    double T_fm = T/hbarC;  // convert to [1/fm]
@@ -542,13 +571,49 @@ void HG_2to2_Scattering::get_bulkvis_coefficients(double T, double* bulkvis_B0, 
    return;
 }
 
-double HG_2to2_Scattering::bulkvis_integrand(double E1, double E2, double Eq, double f0_E1, double f0_E2, double f0_E3, double* bulkvis_B0, double* bulkvis_D0, double* bulkvis_E0)
+void HG_2to2_Scattering::get_bulkvis_coefficients_relaxation(double T, double* bulkvis_Cbulk, double* bulkvis_e2)
+// coefficients for bulk viscous corrections (fits from Gabriel Denicol, derived from relaxation time approximation)
+{
+   double T_fm = T/hbarC;  // convert to [1/fm]
+   double T_power[11];
+   T_power[0] = 1.0;
+   for(int i = 1; i < 11; i++)
+       T_power[i] = T_power[i-1]*T_fm;
+
+   *bulkvis_Cbulk = (  642096.624265727 - 8163329.49562861*T_power[1] 
+                     + 47162768.4292073*T_power[2] - 162590040.002683*T_power[3] 
+                     + 369637951.096896*T_power[4] - 578181331.809836*T_power[5] 
+                     + 629434830.225675*T_power[6] - 470493661.096657*T_power[7] 
+                     + 230936465.421*T_power[8] - 67175218.4629078*T_power[9]
+                     + 8789472.32652964*T_power[10]);
+   *bulkvis_e2 = (  1.18171174036192 - 17.6740645873717*T_power[1]
+                  + 136.298469057177*T_power[2] - 635.999435106846*T_power[3]
+                  + 1918.77100633321*T_power[4] - 3836.32258307711*T_power[5]
+                  + 5136.35746882372*T_power[6] - 4566.22991441914*T_power[7]
+                  + 2593.45375240886*T_power[8] - 853.908199724349*T_power[9]
+                  + 124.260460450113*T_power[10]);
+   return;
+}
+
+double HG_2to2_Scattering::bulkvis_integrand_14moment(double E1, double E2, double Eq, double f0_E1, double f0_E2, double f0_E3, double* bulkvis_B0, double* bulkvis_D0, double* bulkvis_E0)
 {
    double E3 = E1 + E2 - Eq;
    double integrand = (1. + f0_E1)*(-bulkvis_B0[0]*m[0]*m[0] - E1*bulkvis_D0[0] - E1*E1*bulkvis_E0[0])
                       + (1. + f0_E2)*(-bulkvis_B0[1]*m[1]*m[1] - E2*bulkvis_D0[1] - E2*E2*bulkvis_E0[1])
                       + f0_E3*(-bulkvis_B0[2]*m[2]*m[2] - E3*bulkvis_D0[2] - E3*E3*bulkvis_E0[2]);
 
+   return(integrand);
+}
+
+double HG_2to2_Scattering::bulkvis_integrand_relaxation(double T, double E1, double E2, double Eq, double f0_E1, double f0_E2, double f0_E3, double bulkvis_Cbulk, double bulkvis_e2)
+{
+   double E3 = E1 + E2 - Eq;
+   double E1_over_T = E1/T;
+   double E2_over_T = E2/T;
+   double E3_over_T = E3/T;
+   double integrand = (1. + f0_E1)*bulkvis_Cbulk/(E1_over_T)*(-m[0]*m[0]/(3.*T*T) + bulkvis_e2*E1_over_T*E1_over_T)
+                      + (1. + f0_E2)*bulkvis_Cbulk/(E2_over_T)*(-m[1]*m[1]/(3.*T*T) + bulkvis_e2*E2_over_T*E2_over_T)
+                      + f0_E3*bulkvis_Cbulk/(E3_over_T)*(-m[2]*m[2]/(3.*T*T) + bulkvis_e2*E3_over_T*E3_over_T);
    return(integrand);
 }
 
@@ -751,14 +816,23 @@ double HG_2to2_Scattering::RateintegrandE2(double E2, void *params)
        result = common_factor*viscous_integrand(s, t, E1, E2, Eq, Temp, f0_E1, f0_E2, f0_E3);
     else
     {
-       double* bulkvis_B0 = new double [3];
-       double* bulkvis_D0 = new double [3];
-       double* bulkvis_E0 = new double [3];
-       get_bulkvis_coefficients(Temp, bulkvis_B0, bulkvis_D0, bulkvis_E0);
-       result = common_factor*bulkvis_integrand(E1, E2, Eq, f0_E1, f0_E2, f0_E3, bulkvis_B0, bulkvis_D0, bulkvis_E0);
-       delete[] bulkvis_B0;
-       delete[] bulkvis_D0;
-       delete[] bulkvis_E0;
+       if(bulk_deltaf_kind == 0)
+       {
+           double* bulkvis_B0 = new double [3];
+           double* bulkvis_D0 = new double [3];
+           double* bulkvis_E0 = new double [3];
+           get_bulkvis_coefficients_14moment(Temp, bulkvis_B0, bulkvis_D0, bulkvis_E0);
+           result = common_factor*bulkvis_integrand_14moment(E1, E2, Eq, f0_E1, f0_E2, f0_E3, bulkvis_B0, bulkvis_D0, bulkvis_E0);
+           delete[] bulkvis_B0;
+           delete[] bulkvis_D0;
+           delete[] bulkvis_E0;
+       }
+       else if(bulk_deltaf_kind == 1)
+       {
+           double bulkvis_Cbulk, bulkvis_e2;
+           get_bulkvis_coefficients_relaxation(Temp, &bulkvis_Cbulk, &bulkvis_e2);
+           result = common_factor*bulkvis_integrand_relaxation(Temp, E1, E2, Eq, f0_E1, f0_E2, f0_E3, bulkvis_Cbulk, bulkvis_e2);
+       }
     }
 
     return(result);
