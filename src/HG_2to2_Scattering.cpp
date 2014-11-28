@@ -166,13 +166,35 @@ void HG_2to2_Scattering::output_emissionrateTable()
    }
 }
 
-int HG_2to2_Scattering::Calculate_emissionrates(Chemical_potential* chempotential_ptr, int channel_in, string filename_in)
+string HG_2to2_Scattering::get_filename(int channel_id)
+{
+   string file_name;
+
+   if(channel_id == 1)
+      file_name = "pion_rho_to_pion_gamma";
+   else if (channel_id == 2)
+      file_name = "pion_rho_to_omega_to_pion_gamma";
+   else if (channel_id == 3)
+      file_name = "pion_pion_to_rho_gamma";
+   else if (channel_id == 4)
+      file_name = "pion_Kstar_to_K_gamma";
+   else if (channel_id == 5)
+      file_name = "pion_K_to_Kstar_gamma";
+   else if (channel_id == 6)
+      file_name = "rho_K_to_K_gamma";
+   else if (channel_id == 7)
+      file_name = "K_Kstar_to_pion_gamma";
+
+   return(file_name);
+}
+
+int HG_2to2_Scattering::Calculate_emissionrates(Chemical_potential* chempotential_ptr, int channel_in)
 {
    // equilibrium, shear and bulk viscous correction
    double* results = new double [3]; 
 
-   filename = filename_in; 
    channel = channel_in;
+   filename = get_filename(channel); 
 
    set_particleMass();
    set_gausspoints();

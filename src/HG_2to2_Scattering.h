@@ -51,7 +51,8 @@ class HG_2to2_Scattering
       ~HG_2to2_Scattering();
       
       void output_emissionrateTable();
-      int Calculate_emissionrates(Chemical_potential* chempotential_ptr, int channel, string filename_in);
+      string get_filename(int channel_in);
+      int Calculate_emissionrates(Chemical_potential* chempotential_ptr, int channel_in);
       void set_particleMass();
       void set_gausspoints();
       double Integrate_E1(double Eq, double T, double s, double t, double* results);
