@@ -597,11 +597,12 @@ void HG_2to2_Scattering::get_bulkvis_coefficients_14moment(double T, double* bul
 void HG_2to2_Scattering::get_bulkvis_coefficients_relaxation(double T, double* bulkvis_Cbulk, double* bulkvis_e2)
 // coefficients for bulk viscous corrections (fits from Gabriel Denicol, derived from relaxation time approximation)
 {
-   double T_fm = T/hbarC;  // convert to [1/fm]
-   *bulkvis_Cbulk = bulkdf_coeff->interp(1, 2, T_fm, 5);
-   *bulkvis_e2 = bulkdf_coeff->interp(1, 3, T_fm, 5);
+   double T_MeV = T*1000;
+   *bulkvis_Cbulk = bulkdf_coeff->interp(1, 2, T_MeV, 5);
+   *bulkvis_e2 = bulkdf_coeff->interp(1, 3, T_MeV, 5);
 
    // parameterization between 100 MeV to 180 MeV
+   //double T_fm = T/hbarC;  // convert to [1/fm]
    //double T_power[11];
    //T_power[0] = 1.0;
    //for(int i = 1; i < 11; i++)
