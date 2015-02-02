@@ -6,6 +6,7 @@
 #include "ParameterReader.h"
 #include "Physicalconstants.h"
 #include "chemical_potential.h"
+#include "EOS.h"
 
 class HG_2to2_Scattering;
 
@@ -19,6 +20,7 @@ class HG_2to2_Scattering
 {
    private:
       ParameterReader *paraRdr;
+      EOS *EOS_ptr;
 
       double eps;
       int n_Eq, n_Temp;
@@ -47,7 +49,7 @@ class HG_2to2_Scattering
       Table *bulkdf_coeff;
 
    public:
-      HG_2to2_Scattering(ParameterReader* paraRdr_in);
+      HG_2to2_Scattering(ParameterReader* paraRdr_in, EOS* EOS_in);
       ~HG_2to2_Scattering();
       
       void output_emissionrateTable();
@@ -60,6 +62,7 @@ class HG_2to2_Scattering
       double viscous_integrand(double s, double t, double E1, double E2, double Eq, double T, double f0_E1, double f0_E2, double f0_E3);
       void get_bulkvis_coefficients_14moment(double T, double* bulkvis_B0, double* bulkvis_D0, double * bulkvis_E0);
       void get_bulkvis_coefficients_relaxation(double T, double* bulkvis_Cbulk, double* bulkvis_e2);
+      void get_bulkvis_coefficients_relaxation_2(double T, double* bulkvis_Cbulk, double* bulkvis_e2);
 
       double bulkvis_integrand_14moment(double E1, double E2, double Eq, double f0_E1, double f0_E2, double f0_E3, double* bulkvis_B0, double* bulkvis_D0, double* bulkvis_E0);
       double bulkvis_integrand_relaxation(double T, double E1, double E2, double Eq, double f0_E1, double f0_E2, double f0_E3, double bulkvis_Cbulk, double bulkvis_e2);

@@ -15,13 +15,15 @@
 #include "gauss_quadrature.h"
 #include "Arsenal.h"
 #include "Formfactor.h"
+#include "EOS.h"
 
 using namespace std;
 
-HG_2to2_Scattering::HG_2to2_Scattering(ParameterReader* paraRdr_in)
+HG_2to2_Scattering::HG_2to2_Scattering(ParameterReader* paraRdr_in, EOS* EOS_in)
 {
    eps = 1e-16;
    paraRdr = paraRdr_in;
+   EOS_ptr = EOS_in;
 
    n_Eq = paraRdr->getVal("n_Eq");
    double Eq_i = paraRdr->getVal("Eq_min");
@@ -477,6 +479,12 @@ double HG_2to2_Scattering::Integrate_E2(double Eq, double T, double s, double t,
                 get_bulkvis_coefficients_relaxation(T, &bulkvis_Cbulk, &bulkvis_e2);
                 bulkvis_result += common_factor*bulkvis_integrand_relaxation(T, E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_Cbulk, bulkvis_e2)*E2_weight[i];
             }
+            else if(bulk_deltaf_kind == 2)
+            {
+                double bulkvis_Cbulk, bulkvis_e2;
+                get_bulkvis_coefficients_relaxation_2(T, &bulkvis_Cbulk, &bulkvis_e2);
+                bulkvis_result += common_factor*bulkvis_integrand_relaxation(T, E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_Cbulk, bulkvis_e2)*E2_weight[i];
+            }
          }
 
          for(int i=0; i<n_E2; i++)
@@ -503,6 +511,12 @@ double HG_2to2_Scattering::Integrate_E2(double Eq, double T, double s, double t,
             {
                 double bulkvis_Cbulk, bulkvis_e2;
                 get_bulkvis_coefficients_relaxation(T, &bulkvis_Cbulk, &bulkvis_e2);
+                bulkvis_result += common_factor*bulkvis_integrand_relaxation(T, E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_Cbulk, bulkvis_e2)*E2_weight[i];
+            }
+            else if(bulk_deltaf_kind == 2)
+            {
+                double bulkvis_Cbulk, bulkvis_e2;
+                get_bulkvis_coefficients_relaxation_2(T, &bulkvis_Cbulk, &bulkvis_e2);
                 bulkvis_result += common_factor*bulkvis_integrand_relaxation(T, E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_Cbulk, bulkvis_e2)*E2_weight[i];
             }
          }
@@ -533,6 +547,12 @@ double HG_2to2_Scattering::Integrate_E2(double Eq, double T, double s, double t,
             {
                 double bulkvis_Cbulk, bulkvis_e2;
                 get_bulkvis_coefficients_relaxation(T, &bulkvis_Cbulk, &bulkvis_e2);
+                bulkvis_result += common_factor*bulkvis_integrand_relaxation(T, E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_Cbulk, bulkvis_e2)*E2_weight[i];
+            }
+            else if(bulk_deltaf_kind == 2)
+            {
+                double bulkvis_Cbulk, bulkvis_e2;
+                get_bulkvis_coefficients_relaxation_2(T, &bulkvis_Cbulk, &bulkvis_e2);
                 bulkvis_result += common_factor*bulkvis_integrand_relaxation(T, E1, E2_pt[i], Eq, f0_E1, f0_E2, f0_E3, bulkvis_Cbulk, bulkvis_e2)*E2_weight[i];
             }
          }
@@ -619,6 +639,19 @@ void HG_2to2_Scattering::get_bulkvis_coefficients_relaxation(double T, double* b
    //               + 5136.35746882372*T_power[6] - 4566.22991441914*T_power[7]
    //               + 2593.45375240886*T_power[8] - 853.908199724349*T_power[9]
    //               + 124.260460450113*T_power[10]);
+   return;
+}
+
+void HG_2to2_Scattering::get_bulkvis_coefficients_relaxation_2(double T, double* bulkvis_Cbulk, double* bulkvis_e2)
+// coefficients from EOS
+{
+   double cs2 = EOS_ptr->get_cs2_from_temperature(T);
+   double ed = EOS_ptr->get_energy_density_from_temperature(T);
+   double pressure = EOS_ptr->get_pressure_from_temperature(T);
+
+   *bulkvis_Cbulk = 1./(15.*(ed + pressure)*(1./3. - cs2)*(1./3. - cs2));
+   *bulkvis_e2 = 1./3. - cs2;
+
    return;
 }
 
@@ -858,6 +891,12 @@ double HG_2to2_Scattering::RateintegrandE2(double E2, void *params)
        {
            double bulkvis_Cbulk, bulkvis_e2;
            get_bulkvis_coefficients_relaxation(Temp, &bulkvis_Cbulk, &bulkvis_e2);
+           result = common_factor*bulkvis_integrand_relaxation(Temp, E1, E2, Eq, f0_E1, f0_E2, f0_E3, bulkvis_Cbulk, bulkvis_e2);
+       }
+       else if(bulk_deltaf_kind == 2)
+       {
+           double bulkvis_Cbulk, bulkvis_e2;
+           get_bulkvis_coefficients_relaxation_2(Temp, &bulkvis_Cbulk, &bulkvis_e2);
            result = common_factor*bulkvis_integrand_relaxation(Temp, E1, E2, Eq, f0_E1, f0_E2, f0_E3, bulkvis_Cbulk, bulkvis_e2);
        }
     }
