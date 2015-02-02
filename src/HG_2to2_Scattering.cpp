@@ -138,7 +138,8 @@ HG_2to2_Scattering::~HG_2to2_Scattering()
    delete[] m;
    delete[] mu;
    
-   delete bulkdf_coeff;
+   if(bulk_deltaf_kind < 2)
+      delete bulkdf_coeff;
 }
 
 void HG_2to2_Scattering::output_emissionrateTable()
